@@ -1,5 +1,5 @@
 {
-  "name": "@factory-bot",
+  "name": "@mingo/factory-bot",
   "version": "1.0.0",
   "description": "A factory bot library for Node.js and the browser inspired by FactoryBot for Ruby.",
   "main": "./lib/index.js",
