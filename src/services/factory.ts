@@ -57,7 +57,7 @@ export class FactoryBuilder<T extends BaseEntity> {
         return entity;
     }
 
-    async saveMany(count: number, options: Record<string, any>): Promise<T[]> {
+    async saveMany(count: number, options: Record<string, any> = {}): Promise<T[]> {
         const users = [] as T[];
 
         for (let i = 0; i < count; i++) {

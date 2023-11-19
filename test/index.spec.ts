@@ -1,4 +1,4 @@
-import { BaseEntity, Column, DataSource, Entity, PrimaryColumn } from 'typeorm';
+import { BaseEntity, Column, DataSource, Entity, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 import { define } from '../src/services/define';
 import { Factory } from '../src/services/factory';
 import { factoryBuilder } from '../src/services/factory-create';
@@ -17,6 +17,7 @@ class UserEntity extends BaseEntity {
     @Column({ nullable: true })
     role: string;
 
+    @OneToMany(() => PostEntity, (post) => post.user)
     posts: PostEntity[];
 }
 
@@ -33,6 +34,9 @@ class PostEntity extends BaseEntity {
 
     @Column({ nullable: true })
     userId: number;
+
+    @ManyToOne(() => UserEntity, (user) => user.posts)
+    user: UserEntity;
 }
 
 describe('#factory', () => {
@@ -50,21 +54,13 @@ describe('#factory', () => {
 
         await dataSource.initialize();
 
-        define(UserEntity, () => {
-            const factory = new Factory();
-
+        define(UserEntity, (factory: Factory) => {
             factory.trait('withPosts', async (user: UserEntity) => {
                 user.posts = await factoryBuilder(PostEntity).saveMany(3, { title: 'Post title', body: 'Post body' });
             });
 
             factory.trait('withAdmin', (user: UserEntity) => {
                 user.role = 'admin';
-
-                return {
-                    afterSave: () => {
-                        console.log('after save');
-                    }
-                };
             });
 
             factory.build((options: Record<string, any>) => {
@@ -76,28 +72,19 @@ describe('#factory', () => {
 
                 return user;
             });
-
-            return factory;
         });
 
-        define(PostEntity, () => {
-            const factory = new Factory();
-
+        define(PostEntity, (factory: Factory) => {
             factory.build((options: Record<string, any>) => {
                 const post = new PostEntity();
 
-                post.title = options.title;
-                post.body = options.body;
+                post.id = options.id || 1;
+                post.title = options.title || 'Post title';
+                post.body = options.body || 'Post body';
                 post.userId = options.userId;
 
                 return post;
             });
-
-            return factory;
-        });
-
-        jest.spyOn(BaseEntity, 'save').mockImplementation(() => {
-            return Promise.resolve(new BaseEntity());
         });
     });
 
