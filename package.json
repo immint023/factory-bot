@@ -1,7 +1,7 @@
 {
-  "name": "typescript-npm-package-template",
-  "version": "0.0.0-development",
-  "description": "A template for creating npm packages using TypeScript and VSCode",
+  "name": "@factory-bot",
+  "version": "1.0.0",
+  "description": "A factory bot library for Node.js and the browser inspired by FactoryBot for Ruby.",
   "main": "./lib/index.js",
   "files": [
     "lib/**/*"
@@ -19,13 +19,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ryansonshine/typescript-npm-package-template.git"
+    "url": "git@github.com:immint023/factory-bot.git"
   },
   "license": "MIT",
   "author": {
-    "name": "Ryan Sonshine",
-    "email": "ryansonshine@users.noreply.github.com",
-    "url": "https://github.com/ryansonshine"
+    "name": "Minh Ngo",
+    "email": "nvminh023@gmail.com",
+    "url": "https://github.com/immint023"
   },
   "engines": {
     "node": ">=12.0"
@@ -42,9 +42,9 @@
     "codecov"
   ],
   "bugs": {
-    "url": "https://github.com/ryansonshine/typescript-npm-package-template/issues"
+    "url": "https://github.com/immint023/factory-bot/issues"
   },
-  "homepage": "https://github.com/ryansonshine/typescript-npm-package-template#readme",
+  "homepage": "https://github.com/immint023/factory-bot#readme",
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",
     "@ryansonshine/commitizen": "^4.2.8",
