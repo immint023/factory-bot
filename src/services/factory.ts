@@ -1,10 +1,12 @@
 import { BaseEntity } from 'typeorm';
 
+type AfterSaveCallback = (entity?: any) => Promise<void> | void;
+
 type TraitCallbackReturn = {
-    afterSave: () => Promise<void> | void;
+    afterSave: AfterSaveCallback;
 };
 
-type TraitCallback = (entity: any) => Promise<TraitCallbackReturn> | TraitCallbackReturn | Promise<void> | void;
+type TraitCallback = (entity?: any) => Promise<TraitCallbackReturn> | TraitCallbackReturn | Promise<void> | void;
 
 export class Factory {
     public readonly traits: Record<string, TraitCallback> = {};
@@ -44,15 +46,20 @@ export class FactoryBuilder<T extends BaseEntity> {
             ...options
         })) as T;
 
+        const afterSaveTraitCallbacks: AfterSaveCallback[] = [];
         for (const trait of this.selectedTraits()) {
             const traitResponse = (await trait(entity)) as TraitCallbackReturn;
 
             if (traitResponse?.afterSave) {
-                await traitResponse.afterSave();
+                afterSaveTraitCallbacks.push(traitResponse.afterSave);
             }
         }
 
         await entity.save();
+
+        for (const callback of afterSaveTraitCallbacks) {
+            await callback(entity);
+        }
 
         return entity;
     }

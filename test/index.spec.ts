@@ -1,12 +1,13 @@
 import { BaseEntity, Column, DataSource, Entity, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 import { define } from '../src/services/define';
 import { Factory } from '../src/services/factory';
+import { faker } from '@faker-js/faker';
 import { factoryBuilder } from '../src/services/factory-create';
 
 @Entity()
 class UserEntity extends BaseEntity {
     @PrimaryColumn()
-    id: number;
+    id: string;
 
     @Column({ nullable: true })
     name: string;
@@ -24,7 +25,7 @@ class UserEntity extends BaseEntity {
 @Entity()
 class PostEntity extends BaseEntity {
     @PrimaryColumn()
-    id: number;
+    id: string;
 
     @Column()
     title: string;
@@ -55,8 +56,16 @@ describe('#factory', () => {
         await dataSource.initialize();
 
         define(UserEntity, (factory: Factory) => {
-            factory.trait('withPosts', async (user: UserEntity) => {
-                user.posts = await factoryBuilder(PostEntity).saveMany(3, { title: 'Post title', body: 'Post body' });
+            factory.trait('withPosts', () => {
+                return {
+                    afterSave: async (user: UserEntity) => {
+                        await factoryBuilder(PostEntity).saveMany(3, {
+                            title: 'Post title',
+                            body: 'Post body',
+                            userId: user.id
+                        });
+                    }
+                };
             });
 
             factory.trait('withAdmin', (user: UserEntity) => {
@@ -66,7 +75,7 @@ describe('#factory', () => {
             factory.build((options: Record<string, any>) => {
                 const user = new UserEntity();
 
-                user.id = options.id || 1;
+                user.id = options.id || faker.string.uuid();
                 user.name = options.name || 'John Doe';
                 user.email = options.email || 'example@gmail.com';
 
@@ -78,7 +87,7 @@ describe('#factory', () => {
             factory.build((options: Record<string, any>) => {
                 const post = new PostEntity();
 
-                post.id = options.id || 1;
+                post.id = options.id || faker.string.uuid();
                 post.title = options.title || 'Post title';
                 post.body = options.body || 'Post body';
                 post.userId = options.userId;
@@ -108,7 +117,14 @@ describe('#factory', () => {
                 expect(user.name).toBe('John Doe');
                 expect(user.email).toBe('example@gmail.com');
 
-                expect(user.posts).toHaveLength(3);
+                const reloadedUser = await UserEntity.findOne({
+                    where: {
+                        id: user.id
+                    },
+                    relations: ['posts']
+                });
+
+                expect(reloadedUser.posts).toHaveLength(3);
             });
         });
 
