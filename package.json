@@ -44,6 +44,9 @@
   "bugs": {
     "url": "https://github.com/immint023/factory-bot/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://github.com/immint023/factory-bot#readme",
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",
