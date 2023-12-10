@@ -20,6 +20,9 @@ class UserEntity extends BaseEntity {
 
     @OneToMany(() => PostEntity, (post) => post.user)
     posts: PostEntity[];
+
+    @OneToMany(() => ArticleEntity, (article) => article.user)
+    articles: ArticleEntity[];
 }
 
 @Entity()
@@ -40,6 +43,24 @@ class PostEntity extends BaseEntity {
     user: UserEntity;
 }
 
+@Entity()
+class ArticleEntity extends BaseEntity {
+    @PrimaryColumn()
+    id: string;
+
+    @Column()
+    title: string;
+
+    @Column()
+    body: string;
+
+    @Column({ nullable: true })
+    userId: string;
+
+    @ManyToOne(() => UserEntity, (user) => user.articles)
+    user: UserEntity;
+}
+
 describe('#factory', () => {
     let dataSource: DataSource;
 
@@ -48,7 +69,7 @@ describe('#factory', () => {
             type: 'sqlite',
             database: ':memory:',
             dropSchema: true,
-            entities: [UserEntity, PostEntity],
+            entities: [UserEntity, PostEntity, ArticleEntity],
             synchronize: true,
             logging: false
         });
@@ -56,6 +77,8 @@ describe('#factory', () => {
         await dataSource.initialize();
 
         define(UserEntity, (f: Factory) => {
+            f.associationMany('articles', 'articles', ArticleEntity, 3);
+
             f.trait('withAdmin', (user: UserEntity) => {
                 user.role = 'admin';
             });
@@ -76,6 +99,12 @@ describe('#factory', () => {
 
                 return user;
             });
+
+            f.afterSave(async (user: UserEntity) => {
+                user.role = 'admin';
+
+                await user.save();
+            });
         });
 
         define(PostEntity, (f: Factory) => {
@@ -91,6 +120,34 @@ describe('#factory', () => {
                 return post;
             });
         });
+
+        define(ArticleEntity, (f: Factory) => {
+            f.build(() => {
+                const article = new ArticleEntity();
+
+                article.id = faker.string.uuid();
+                article.title = 'Post title';
+                article.body = 'Post body';
+
+                return article;
+            });
+        });
+    });
+
+    describe('with afterSave', () => {
+        it('should handle afterSave callback', async () => {
+            const user = await factory(UserEntity).saveOne();
+
+            expect(user.role).toBe('admin');
+        });
+    });
+
+    describe('with saveMany', () => {
+        it('should create many entities', async () => {
+            const users = await factory(UserEntity).saveMany(3);
+
+            expect(users).toHaveLength(3);
+        });
     });
 
     describe('with standard usage', () => {
@@ -102,6 +159,41 @@ describe('#factory', () => {
             expect(user.email).toBe('example@gmail.com');
             expect(user.posts).toHaveLength(3);
             expect(user.posts[0].userId).toBe(user.id);
+        });
+    });
+
+    describe('with association', () => {
+        describe('with one', () => {
+            it('should create a new entity with association', async () => {
+                const post = await factory(PostEntity).saveOne();
+
+                expect(post).toBeInstanceOf(PostEntity);
+                expect(post.user).toBeInstanceOf(UserEntity);
+            });
+        });
+        describe('with many', () => {
+            it('should create a new entity with association', async () => {
+                const user = await factory(UserEntity).saveOne();
+
+                const articles = await ArticleEntity.count({
+                    where: {
+                        userId: user.id
+                    }
+                });
+
+                expect(articles).toBe(3);
+            });
+
+            describe('when association is already set', () => {
+                it('should not override the association', async () => {
+                    const article = await factory(ArticleEntity).saveOne();
+                    const user = await factory(UserEntity).saveOne({
+                        articles: [article]
+                    });
+
+                    expect(user.articles).toHaveLength(1);
+                });
+            });
         });
     });
 

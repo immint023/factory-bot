@@ -80,28 +80,35 @@ export class FactoryBuilder<T extends BaseEntity> {
         return this.traits.map((trait) => this.factory.traits[trait]);
     }
 
-    async saveOne(options: Record<string, any> = {}): Promise<T> {
-        const entity = (await this.factory.buildCallback()) as T;
+    async build(options: Record<string, any>): Promise<T> {
+        const entity = (await this.factory.buildCallback()) as Promise<T>;
 
         for (const [key, value] of Object.entries(options)) {
             entity[key] = value;
         }
+
+        return entity;
+    }
+
+    async saveOne(options: Record<string, any> = {}): Promise<T> {
+        const entity = await this.build(options);
+
         await entity.save();
 
         const afterSaveTraitCallbacks: AfterSaveCallback[] = [];
         for (const trait of this.selectedTraits()) {
             const traitResponse = (await trait(entity)) as TraitCallbackReturn;
 
-            if (traitResponse?.afterSave) {
-                afterSaveTraitCallbacks.push(traitResponse.afterSave);
-            }
+            // if (traitResponse?.afterSave) {
+            //     afterSaveTraitCallbacks.push(traitResponse.afterSave);
+            // }
         }
 
         await entity.save();
 
-        for (const callback of afterSaveTraitCallbacks) {
-            await callback(entity);
-        }
+        // for (const callback of afterSaveTraitCallbacks) {
+        //     await callback(entity);
+        // }
 
         // NOTE: build associations for save many
         for (const [association, data] of Object.entries(this.factory.associationManyData)) {
@@ -111,8 +118,7 @@ export class FactoryBuilder<T extends BaseEntity> {
             }
 
             const models = await factory(data.entity).saveMany(data.count, {
-                ...data.options,
-                [data.relation]: entity
+                ...data.options
             });
 
             entity[association] = models;
@@ -127,12 +133,16 @@ export class FactoryBuilder<T extends BaseEntity> {
             }
 
             const model = await factory(data.entity).saveOne({
-                ...data.options,
-                [data.relation]: entity
+                ...data.options
             });
 
             entity[association] = model;
             await entity.save();
+        }
+
+        // NOTE: run afterSave callback
+        if (this.factory.afterSaveCallback) {
+            await this.factory.afterSaveCallback(entity);
         }
 
         return entity;
