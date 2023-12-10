@@ -14,16 +14,16 @@ npm install @hodfords/factory-bot
 ```typescript
 // user.factory.ts
 
- define(UserEntity, (factory: Factory) => {
-    factory.trait('withPosts', async (user: UserEntity) => {
-        user.posts = await factoryBuilder(PostEntity).saveMany(3, { title: 'Post title', body: 'Post body' });
+ define(UserEntity, (f: Factory) => {
+    f.trait('withPosts', async (user: UserEntity) => {
+        user.posts = await factory(PostEntity).saveMany(3, { title: 'Post title', body: 'Post body' });
     });
 
-    factory.trait('withAdmin', (user: UserEntity) => {
+    f.trait('withAdmin', (user: UserEntity) => {
         user.role = 'admin';
     });
 
-    factory.build((options: Record<string, any>) => {
+    f.build((options: Record<string, any>) => {
         const user = new UserEntity();
 
         user.id = options.id || 1;
@@ -37,7 +37,7 @@ npm install @hodfords/factory-bot
 
 ### Create data
 ```typescript
-const user = await factoryBuilder(UserEntity).
+const user = await factory(UserEntity).
     withTraits('withAdmin').
     saveOne();
 ```

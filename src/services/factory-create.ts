@@ -7,7 +7,7 @@ import { FactoryBuilder } from './factory';
  *
  * factory(UserEntity).setTraits('withPosts', 'admin').saveOne({ name: 'John' });
  * */
-export function factoryBuilder<T extends BaseEntity>(entity: ObjectType<T>): FactoryBuilder<T> {
+export function factory<T extends BaseEntity>(entity: ObjectType<T>): FactoryBuilder<T> {
     const factory = factories[entity.name];
 
     return new FactoryBuilder<T>(factory);

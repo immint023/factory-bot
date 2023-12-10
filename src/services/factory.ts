@@ -1,5 +1,5 @@
 import { BaseEntity, ObjectType } from 'typeorm';
-import { factoryBuilder } from './factory-create';
+import { factory } from './factory-create';
 
 type AfterSaveCallback = (entity?: any) => Promise<void> | void;
 
@@ -110,7 +110,7 @@ export class FactoryBuilder<T extends BaseEntity> {
                 continue;
             }
 
-            const models = await factoryBuilder(data.entity).saveMany(data.count, {
+            const models = await factory(data.entity).saveMany(data.count, {
                 ...data.options,
                 [data.relation]: entity
             });
@@ -126,7 +126,7 @@ export class FactoryBuilder<T extends BaseEntity> {
                 continue;
             }
 
-            const model = await factoryBuilder(data.entity).saveOne({
+            const model = await factory(data.entity).saveOne({
                 ...data.options,
                 [data.relation]: entity
             });
