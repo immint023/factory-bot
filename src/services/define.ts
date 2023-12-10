@@ -16,6 +16,11 @@ export type DefineCallback = (factory: Factory) => void;
  *              user.admin = true;
  *      });
  *
+ *      factory.associationMany('posts', Post, 3, {
+ *        title: faker.lorem.sentence,
+ *        content: faker.lorem.paragraph,
+ *      }, 'user');
+ *
  *      factory.build(async (options) => {
  *              const user = new UserEntity();
  *              user.name = faker.name.findName();

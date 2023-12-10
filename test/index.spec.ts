@@ -34,7 +34,7 @@ class PostEntity extends BaseEntity {
     body: string;
 
     @Column({ nullable: true })
-    userId: number;
+    userId: string;
 
     @ManyToOne(() => UserEntity, (user) => user.posts)
     user: UserEntity;
@@ -56,41 +56,37 @@ describe('#factory', () => {
         await dataSource.initialize();
 
         define(UserEntity, (factory: Factory) => {
-            factory.trait('withPosts', () => {
-                return {
-                    afterSave: async (user: UserEntity) => {
-                        await factoryBuilder(PostEntity).saveMany(3, {
-                            title: 'Post title',
-                            body: 'Post body',
-                            userId: user.id
-                        });
-                    }
-                };
-            });
-
             factory.trait('withAdmin', (user: UserEntity) => {
                 user.role = 'admin';
             });
 
-            factory.build((options: Record<string, any>) => {
+            factory.trait('withPosts', async (user: UserEntity) => {
+                const posts = await factoryBuilder(PostEntity).saveMany(3, { user });
+                user.posts = posts;
+
+                await user.save();
+            });
+
+            factory.build(() => {
                 const user = new UserEntity();
 
-                user.id = options.id || faker.string.uuid();
-                user.name = options.name || 'John Doe';
-                user.email = options.email || 'example@gmail.com';
+                user.id = faker.string.uuid();
+                user.name = 'John Doe';
+                user.email = 'example@gmail.com';
 
                 return user;
             });
         });
 
         define(PostEntity, (factory: Factory) => {
-            factory.build((options: Record<string, any>) => {
+            factory.associationOne('user', 'user', UserEntity);
+
+            factory.build(() => {
                 const post = new PostEntity();
 
-                post.id = options.id || faker.string.uuid();
-                post.title = options.title || 'Post title';
-                post.body = options.body || 'Post body';
-                post.userId = options.userId;
+                post.id = faker.string.uuid();
+                post.title = 'Post title';
+                post.body = 'Post body';
 
                 return post;
             });
@@ -99,12 +95,13 @@ describe('#factory', () => {
 
     describe('with standard usage', () => {
         it('should create a new entity', async () => {
-            const user = await factoryBuilder(UserEntity).saveOne();
+            const user = await factoryBuilder(UserEntity).withTraits('withPosts').saveOne();
 
             expect(user).toBeInstanceOf(UserEntity);
             expect(user.name).toBe('John Doe');
             expect(user.email).toBe('example@gmail.com');
-            expect(user.posts).toBeUndefined();
+            expect(user.posts).toHaveLength(3);
+            expect(user.posts[0].userId).toBe(user.id);
         });
     });
 
@@ -144,7 +141,7 @@ describe('#factory', () => {
                 const post = await factoryBuilder(PostEntity).saveOne({
                     title: 'Post title',
                     body: 'Post body',
-                    userId: user.id
+                    user
                 });
 
                 expect(user.name).toBe('Minh Ngo');
