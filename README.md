@@ -6,7 +6,7 @@
 ## Install
 
 ```bash
-npm install @hodfords/factory-bot
+npm install factory-box
 ```
 
 ## Usage
@@ -36,8 +36,16 @@ npm install @hodfords/factory-bot
 ```
 
 ### Create data
+#### Apply trait
+```typescript
+const user = await factory(UserEntity).withTraits('withAdmin').saveOne();
+```
+
+
+#### Override properties
 ```typescript
 const user = await factory(UserEntity).
-    withTraits('withAdmin').
-    saveOne();
+    saveOne({
+        email: 'override_email@example.com'
+    });
 ```

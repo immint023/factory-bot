@@ -90,7 +90,7 @@ export class FactoryBuilder<T extends BaseEntity> {
         return entity;
     }
 
-    async saveOne(options: Record<string, any> = {}): Promise<T> {
+    async saveOne(options: Partial<T> = {}): Promise<T> {
         const entity = await this.build(options);
 
         await entity.save();
@@ -148,7 +148,7 @@ export class FactoryBuilder<T extends BaseEntity> {
         return entity;
     }
 
-    async saveMany(count: number, options: Record<string, any> = {}): Promise<T[]> {
+    async saveMany(count: number, options: Partial<T> = {}): Promise<T[]> {
         const models = [] as T[];
 
         for (let i = 0; i < count; i++) {
