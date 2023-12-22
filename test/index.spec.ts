@@ -3,6 +3,7 @@ import { define } from '../src/services/define';
 import { Factory } from '../src/services/factory';
 import { faker } from '@faker-js/faker';
 import { factory } from '../src/services/factory-create';
+import { FactoryNotRegisteredError } from '../src/errors/factory-not-registered';
 
 @Entity()
 class UserEntity extends BaseEntity {
@@ -131,6 +132,14 @@ describe('#factory', () => {
 
                 return article;
             });
+        });
+    });
+
+    describe('if factory is not defined', () => {
+        it('should throw error', () => {
+            class User {}
+
+            expect(() => factory(User as any)).toThrowError(new FactoryNotRegisteredError('User'));
         });
     });
 
